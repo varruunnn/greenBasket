@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>Your Cart</h2>
+<ul id="cart-list">
+  {% for it in items %}
+    <li>{{ it.name }} ×{{ it.qty }} — ${{ it.price*it.qty }}</li>
+  {% endfor %}
+</ul>
+<p>Total: ${{ total }}</p>
+<button id="checkout">Check Out</button>
+
+<!-- Eco Modal -->
+<div id="eco-modal" class="modal hidden">
+  <div class="modal-content">
+    <span id="close-modal" class="close">&times;</span>
+    <h3>Eco-Score: <span id="eco-score">–</span></h3>
+    <ul id="swap-list"></ul>
+    <p>Earnable Coins: <span id="coins-total">0</span></p>
+    <button id="apply-redemption">Redeem Coins</button>
+  </div>
+</div>
+{% endblock %}

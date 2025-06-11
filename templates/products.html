@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="grid">  
+  {% for id, p in products.items() %}
+  <div class="card">
+    <h2>{{ p.name }}</h2>
+    <p>Price: ${{ p.price }}</p>
+    <p>CO₂: {{ p.carbon }} kg</p>
+    <a class="btn" href="/add/{{ id }}">Add to Cart</a>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

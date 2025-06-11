@@ -1,0 +1,11 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>Your Wallet</h2>
+<p>Balance: {{ wallet.balance }} coins</p>
+<h3>History</h3>
+<ul>
+  {% for tx in wallet.history %}
+    <li>{{ tx.type }} — {{ tx.coins }} coins</li>
+  {% endfor %}
+</ul>
+{% endblock %}
