@@ -1,13 +1,786 @@
-{% extends "layout.html" %}
-{% block content %}
-<div class="grid">  
-  {% for id, p in products.items() %}
-  <div class="card">
-    <h2>{{ p.name }}</h2>
-    <p>Price: ${{ p.price }}</p>
-    <p>CO₂: {{ p.carbon }} kg</p>
-    <a class="btn" href="/add/{{ id }}">Add to Cart</a>
-  </div>
-  {% endfor %}
-</div>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoShop - Sustainable Air Conditioners</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #4CAF50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .eco-coins {
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .cart-icon {
+            background: #2196F3;
+            color: white;
+            padding: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .cart-icon:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.4);
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #FF5722;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .product-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .sustainability-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .high-sustainability {
+            background: linear-gradient(45deg, #4CAF50, #8BC34A);
+        }
+
+        .medium-sustainability {
+            background: linear-gradient(45deg, #FF9800, #FFC107);
+        }
+
+        .low-sustainability {
+            background: linear-gradient(45deg, #F44336, #FF5722);
+        }
+
+        .product-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .product-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .price {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #e74c3c;
+            margin: 15px 0;
+        }
+
+        .add-to-cart-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .add-to-cart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .recommendation-content {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .product-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .comparison-card {
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .current-product {
+            background: rgba(244, 67, 54, 0.1);
+            border: 2px solid #f44336;
+        }
+
+        .recommended-product {
+            background: rgba(76, 175, 80, 0.1);
+            border: 2px solid #4CAF50;
+        }
+
+        .ai-comment {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            font-style: italic;
+        }
+
+        .cart-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-top: 30px;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .cart-summary {
+            background: rgba(0, 0, 0, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .discount-section {
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #2196F3, #21CBF3);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(45deg, #FF9800, #F57C00);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 25px;
+            color: white;
+            font-weight: bold;
+            z-index: 1001;
+            animation: slideInRight 0.3s ease;
+        }
+
+        .notification.success {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+        }
+
+        .notification.error {
+            background: linear-gradient(45deg, #F44336, #D32F2F);
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .environmental-impact {
+            background: linear-gradient(45deg, #4CAF50, #8BC34A);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .impact-stat {
+            display: inline-block;
+            margin: 0 20px;
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .product-comparison {
+                grid-template-columns: 1fr;
+            }
+
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                🌱 EcoShop
+            </div>
+            <div class="eco-coins" id="ecoCoins">
+                💰 EcoCoins: <span id="coinBalance">0</span>
+            </div>
+            <div class="cart-icon" onclick="toggleCart()">
+                🛒
+                <div class="cart-count" id="cartCount">0</div>
+            </div>
+        </div>
+
+        <div class="products-grid" id="productsGrid">
+            <!-- Products will be loaded here -->
+        </div>
+
+        <div class="cart-panel" id="cartPanel" style="display: none;">
+            <h2>🛒 Your Cart</h2>
+            <div id="cartItems"></div>
+            <div class="cart-summary" id="cartSummary"></div>
+            
+            <div class="discount-section">
+                <h3>💰 Use EcoCoins for Discount</h3>
+                <p>Each EcoCoins = $1 discount</p>
+                <input type="number" id="coinsToUse" placeholder="Enter coins to use" min="0" style="padding: 10px; border-radius: 10px; border: none; margin: 10px 0; width: 200px;">
+                <button class="btn btn-warning" onclick="applyDiscount()">Apply Discount</button>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn btn-success" onclick="checkout()">🎉 Checkout</button>
+                <button class="btn btn-primary" onclick="toggleCart()">Continue Shopping</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommendation Modal -->
+    <div id="recommendationModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeRecommendation()">&times;</span>
+            <div class="recommendation-content">
+                <h2>🌱 Eco-Friendly Recommendation</h2>
+                
+                <div class="product-comparison">
+                    <div class="comparison-card current-product">
+                        <h3>Current Choice</h3>
+                        <div id="currentProductInfo"></div>
+                    </div>
+                    <div class="comparison-card recommended-product">
+                        <h3>Recommended Alternative</h3>
+                        <div id="recommendedProductInfo"></div>
+                    </div>
+                </div>
+                
+                <div class="ai-comment" id="aiComment">
+                    <!-- AI recommendation will appear here -->
+                </div>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn btn-success" onclick="acceptRecommendation()">
+                        🌱 Switch to Eco-Friendly Option
+                    </button>
+                    <button class="btn btn-primary" onclick="closeRecommendation()">
+                        Keep Current Choice
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const PRODUCTS = {
+            1: {"name": "CoolAir 3000 (3★)", "price": 300, "carbon": 150, "sustainability": 70},
+            2: {"name": "EcoAir X (5★)", "price": 400, "carbon": 70, "sustainability": 95},
+            3: {"name": "PowerMax AC (2★)", "price": 250, "carbon": 200, "sustainability": 40},
+            4: {"name": "GreenBreeze Plus (4★)", "price": 350, "carbon": 90, "sustainability": 85}
+        };
+
+        let currentRecommendation = null;
+        let cartVisible = false;
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProducts();
+            updateCartDisplay();
+        });
+
+        function loadProducts() {
+            const grid = document.getElementById('productsGrid');
+            grid.innerHTML = '';
+
+            Object.entries(PRODUCTS).forEach(([id, product]) => {
+                const sustainabilityClass = product.sustainability >= 80 ? 'high-sustainability' : 
+                                          product.sustainability >= 70 ? 'medium-sustainability' : 'low-sustainability';
+
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <div class="sustainability-badge ${sustainabilityClass}">
+                        ${product.sustainability}% Sustainable
+                    </div>
+                    <div class="product-name">${product.name}</div>
+                    <div class="product-stats">
+                        <div class="stat">
+                            <div class="stat-label">Annual Carbon</div>
+                            <div class="stat-value">${product.carbon}kg CO₂</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">Sustainability</div>
+                            <div class="stat-value">${product.sustainability}/100</div>
+                        </div>
+                    </div>
+                    <div class="price">$${product.price}</div>
+                    <button class="add-to-cart-btn" onclick="addToCart(${id})">
+                        Add to Cart 🛒
+                    </button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        async function addToCart(productId) {
+            try {
+                const response = await fetch('/api/add-to-cart', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ product_id: productId })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    if (data.show_recommendation) {
+                        showRecommendation(data.recommendation);
+                    } else {
+                        showNotification(`${data.message} 💚`, 'success');
+                        updateCoinBalance();
+                    }
+                    updateCartDisplay();
+                } else {
+                    showNotification(data.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error adding to cart:', error);
+                showNotification('Error adding product to cart', 'error');
+            }
+        }
+
+        function showRecommendation(recommendation) {
+            currentRecommendation = recommendation;
+            const modal = document.getElementById('recommendationModal');
+            
+            // Fill current product info
+            document.getElementById('currentProductInfo').innerHTML = `
+                <h4>${recommendation.current_product.name}</h4>
+                <p>Price: $${recommendation.current_product.price}</p>
+                <p>Carbon: ${recommendation.current_product.carbon}kg CO₂/year</p>
+                <p>Sustainability: ${recommendation.current_product.sustainability}/100</p>
+            `;
+
+            // Fill recommended product info
+            document.getElementById('recommendedProductInfo').innerHTML = `
+                <h4>${recommendation.suggested_product.name}</h4>
+                <p>Price: $${recommendation.suggested_product.price}</p>
+                <p>Carbon: ${recommendation.suggested_product.carbon}kg CO₂/year</p>
+                <p>Sustainability: ${recommendation.suggested_product.sustainability}/100</p>
+                <p style="color: #4CAF50; font-weight: bold;">
+                    Save ${recommendation.carbon_savings}kg CO₂/year! 🌱
+                </p>
+                ${recommendation.price_difference > 0 ? 
+                    `<p style="color: #FF9800;">+$${recommendation.price_difference} more</p>` : 
+                    `<p style="color: #4CAF50;">Save $${Math.abs(recommendation.price_difference)}!</p>`
+                }
+            `;
+
+            // Show AI comment
+            document.getElementById('aiComment').innerHTML = `
+                🤖 AI Recommendation: ${recommendation.ai_comment}
+            `;
+
+            modal.style.display = 'block';
+        }
+
+        async function acceptRecommendation() {
+            if (!currentRecommendation) return;
+
+            try {
+                const response = await fetch('/api/accept-recommendation', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        from_id: currentRecommendation.current_id,
+                        to_id: currentRecommendation.suggested_id,
+                        carbon_savings: currentRecommendation.carbon_savings
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showNotification(data.message, 'success');
+                    updateCoinBalance();
+                    updateCartDisplay();
+                    closeRecommendation();
+                } else {
+                    showNotification(data.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error accepting recommendation:', error);
+                showNotification('Error processing recommendation', 'error');
+            }
+        }
+
+        function closeRecommendation() {
+            document.getElementById('recommendationModal').style.display = 'none';
+            currentRecommendation = null;
+        }
+
+        function toggleCart() {
+            cartVisible = !cartVisible;
+            document.getElementById('cartPanel').style.display = cartVisible ? 'block' : 'none';
+            if (cartVisible) {
+                updateCartDisplay();
+            }
+        }
+
+        async function updateCartDisplay() {
+            try {
+                const response = await fetch('/api/get-cart');
+                const data = await response.json();
+
+                // Update cart count
+                const totalItems = data.cart_items.reduce((sum, item) => sum + item.quantity, 0);
+                document.getElementById('cartCount').textContent = totalItems;
+
+                // Update coin balance
+                document.getElementById('coinBalance').textContent = data.eco_coins;
+
+                // Update cart items
+                const cartItemsDiv = document.getElementById('cartItems');
+                cartItemsDiv.innerHTML = '';
+
+                if (data.cart_items.length === 0) {
+                    cartItemsDiv.innerHTML = '<p style="text-align: center; color: #666;">Your cart is empty</p>';
+                } else {
+                    data.cart_items.forEach(item => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'cart-item';
+                        itemDiv.innerHTML = `
+                            <div>
+                                <strong>${item.name}</strong><br>
+                                <small>Qty: ${item.quantity} | ${item.carbon}kg CO₂ each</small>
+                            </div>
+                            <div>
+                                <strong>$${item.total}</strong>
+                            </div>
+                        `;
+                        cartItemsDiv.appendChild(itemDiv);
+                    });
+                }
+
+                // Update cart summary
+                document.getElementById('cartSummary').innerHTML = `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span>Total Price:</span>
+                        <strong>$${data.total_price}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span>Total Carbon Impact:</span>
+                        <strong>${data.total_carbon}kg CO₂/year</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; color: #4CAF50;">
+                        <span>Available EcoCoins:</span>
+                        <strong>${data.eco_coins} coins</strong>
+                    </div>
+                `;
+
+                // Update coins input max value
+                document.getElementById('coinsToUse').max = data.eco_coins;
+
+            } catch (error) {
+                console.error('Error updating cart:', error);
+            }
+        }
+
+        async function applyDiscount() {
+            const coinsToUse = parseInt(document.getElementById('coinsToUse').value) || 0;
+            
+            if (coinsToUse <= 0) {
+                showNotification('Please enter a valid number of coins', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/apply-discount', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ coins: coinsToUse })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showNotification(data.message, 'success');
+                    updateCartDisplay();
+                    document.getElementById('coinsToUse').value = '';
+                } else {
+                    showNotification(data.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error applying discount:', error);
+                showNotification('Error applying discount', 'error');
+            }
+        }
+
+        async function checkout() {
+            try {
+                const response = await fetch('/api/checkout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Show environmental impact
+                    if (data.environmental_impact.carbon_saved > 0) {
+                        const impactDiv = document.createElement('div');
+                        impactDiv.className = 'environmental-impact';
+                        impactDiv.innerHTML = `
+                            <h3>🌍 Your Environmental Impact</h3>
+                            <div class="impact-stat">
+                                <strong>${data.environmental_impact.carbon_saved}kg</strong><br>
+                                CO₂ Saved Annually
+                            </div>
+                            <div class="impact-stat">
+                                <strong>${data.environmental_impact.eco_friendly_purchases}</strong><br>
+                                Eco-Friendly Purchases
+                            </div>
+                            <p>Equivalent to planting ${Math.floor(data.environmental_impact.carbon_saved / 10)} trees! 🌳</p>
+                        `;
+                        document.getElementById('cartPanel').insertBefore(impactDiv, document.getElementById('cartPanel').firstChild);
+                    }
+
+                    showNotification(data.message, 'success');
+                    setTimeout(() => {
+                        updateCartDisplay();
+                        toggleCart();
+                    }, 3000);
+                } else {
+                    showNotification(data.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error during checkout:', error);
+                showNotification('Error during checkout', 'error');
+            }
+        }
+
+        function updateCoinBalance() {
+            // This will be called after coin-earning actions
+            setTimeout(updateCartDisplay, 500);
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 4000);
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('recommendationModal');
+            if (event.target === modal) {
+                closeRecommendation();
+            }
+        }
+    </script>
+</body>
+</html>
