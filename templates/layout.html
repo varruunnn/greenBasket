@@ -1,15 +1,14 @@
-<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EcoShop - Sustainable Air Conditioners</title>
-    <link rel="stylesheet" href="../static//css/style.css" />
+    <title>GreenBasket - Buy Sustainable Products</title>
+    <link rel="stylesheet" href="../static/css/style.css" />
   </head>
   <body>
     <div class="container">
       <div class="header">
-        <div class="logo">EcoShop</div>
+        <div class="logo">GreenBasket</div>
         <div class="eco-coins" id="ecoCoins">
           💰 EcoCoins: <span id="coinBalance">0</span>
         </div>
@@ -20,7 +19,11 @@
       </div>
 
       <div class="products-grid" id="productsGrid"></div>
-
+      <div style="text-align:center; margin: 20px 0;">
+        <button class="btn btn-info" onclick="openAssessment()">
+          📊 Assess Your Product
+        </button>
+      </div>
       <div class="cart-panel" id="cartPanel" style="display: none">
         <h2>🛒 Your Cart</h2>
         <div id="cartItems"></div>
@@ -56,37 +59,67 @@
           </button>
         </div>
       </div>
-    </div>
-    <div id="recommendationModal" class="modal">
-      <div class="modal-content">
-        <span class="close" onclick="closeRecommendation()">&times;</span>
-        <div class="recommendation-content">
-          <h2>🌱 Eco-Friendly Recommendation</h2>
-
-          <div class="product-comparison">
-            <div class="comparison-card current-product">
-              <h3>Current Choice</h3>
-              <div id="currentProductInfo"></div>
+      <div id="recommendationModal" class="modal">
+        <div class="modal-content">
+          <span class="close" onclick="closeRecommendation()">&times;</span>
+          <div class="recommendation-content">
+            <h2>🌱 Eco-Friendly Recommendation</h2>
+            <div class="product-comparison">
+              <div class="comparison-card current-product">
+                <h3>Current Choice</h3>
+                <div id="currentProductInfo"></div>
+              </div>
+              <div class="comparison-card recommended-product">
+                <h3>Recommended Alternative</h3>
+                <div id="recommendedProductInfo"></div>
+              </div>
             </div>
-            <div class="comparison-card recommended-product">
-              <h3>Recommended Alternative</h3>
-              <div id="recommendedProductInfo"></div>
+            <div class="ai-comment" id="aiComment"></div>
+            <div style="text-align: center; margin-top: 20px">
+              <button class="btn btn-success" onclick="acceptRecommendation()">
+                🌱 Switch to Eco-Friendly Option
+              </button>
+              <button class="btn btn-primary" onclick="closeRecommendation()">
+                Keep Current Choice
+              </button>
             </div>
-          </div>
-
-          <div class="ai-comment" id="aiComment"></div>
-
-          <div style="text-align: center; margin-top: 20px">
-            <button class="btn btn-success" onclick="acceptRecommendation()">
-              🌱 Switch to Eco-Friendly Option
-            </button>
-            <button class="btn btn-primary" onclick="closeRecommendation()">
-              Keep Current Choice
-            </button>
           </div>
         </div>
       </div>
+      <div id="assessmentModal" class="modal" style="display:none;">
+        <div class="modal-content">
+          <span class="close" onclick="closeAssessment()">&times;</span>
+          <h2>🔍 Assess Your Item</h2>
+          <form id="assessmentForm">
+            <label>Product Name/Model:</label>
+            <input type="text" id="prodName" required />
+
+            <label>Purchase Year:</label>
+            <input type="number" id="purchaseYear" min="1900" max="2025" required />
+
+            <label>Average Power Draw (kWh/year):</label>
+            <input type="number" id="powerDraw" min="0" required />
+
+            <label>Current Condition:</label>
+            <select id="condition" required>
+              <option value="Excellent">Excellent</option>
+              <option value="Good">Good</option>
+              <option value="Fair">Fair</option>
+              <option value="Poor">Poor</option>
+            </select>
+
+            <label>Efficiency / Rating:</label>
+            <input type="text" id="rating" placeholder="e.g. SEER 14 or ★★★★" required />
+
+            <button type="submit" class="btn btn-primary">
+              Get Score & Coin Offer
+            </button>
+          </form>
+          <div id="assessmentResult" style="margin-top:20px;"></div>
+        </div>
+      </div>
     </div>
+
     <script src="../static/js/main.js"></script>
   </body>
 </html>

@@ -62,19 +62,19 @@ def add_to_cart():
             ai_comment = generate_ai_recommendation(product, best_alt)
             
             return jsonify(
-                success=True,
-                added_to_cart=True,
-                show_recommendation=True,
-                recommendation={
-                    "current_product": product,
-                    "current_id": product_id,
-                    "suggested_product": best_alt["product"],
-                    "suggested_id": best_alt["id"],
-                    "carbon_savings": best_alt["carbon_savings"],
-                    "ai_comment": ai_comment,
-                    "price_difference": best_alt["product"]["price"] - product["price"]
-                }
-            )
+    success=True,
+    show_recommendation=True,
+    recommendation={
+        "current_product": product,
+        "current_id": product_id,
+        "suggested_product": best_alt["product"],
+        "suggested_id": best_alt["id"],
+        "carbon_savings": best_alt["carbon_savings"],
+        "price_difference": best_alt["product"]["price"] - product["price"],
+        "ai_comment": ai_comment
+    }
+)
+
     coins_reward = calc_coins_reward(product["sustainability"])
     wallet = session.setdefault("wallet", {"balance": 0, "history": []})
     wallet["balance"] += coins_reward
@@ -244,6 +244,39 @@ def checkout():
             "eco_friendly_purchases": eco_friendly_purchases
         }
     )
+@app.route("/api/assess-product", methods=["POST"])
+def assess_product():
+    data = request.json or {}
+    required = ["name","year","power_draw","condition","rating"]
+    for field in required:
+        if field not in data:
+            return jsonify(error=f"Missing field: {field}"), 400
+    prompt = f"""
+        The user has a product:
+        • Name/Model: {data['name']}
+        • Purchased in: {data['year']}
+        • Average power consumption: {data['power_draw']} kWh/year
+        • Current condition: {data['condition']}
+        • Efficiency rating: {data['rating']}
+
+        Respond strictly in this JSON format:
+        {{
+        "eco_score": <eco_score (0-100)>,
+        "eco_coins": <coins_to_offer>,
+        "rationale": "<short rationale>"
+        }}
+        """
+
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=prompt
+        )
+        return jsonify(success=True, result=response.text.strip())
+    except Exception as e:
+        app.logger.exception("Gemini error")
+        return jsonify(error="AI service unavailable"), 500
+
 
 if __name__ == "__main__":
     app.run(debug=True)
